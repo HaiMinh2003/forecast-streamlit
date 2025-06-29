@@ -51,10 +51,9 @@ if uploaded_file:
             forecast["delta"] = forecast["yhat"] - recent_avg
             forecast["pct_change"] = 100 * forecast["delta"] / recent_avg
 
-            # Tạo dataframe kết quả với tên cột rõ ràng
+            # Tạo dataframe kết quả KHÔNG CÓ CỘT STT
             forecast_result_raw = forecast[["ds", "yhat", "delta", "pct_change"]].tail(forecast_months)
             forecast_result = pd.DataFrame({
-                "STT": range(1, len(forecast_result_raw) + 1),
                 "Tháng dự báo": forecast_result_raw["ds"].dt.strftime("%m/%Y"),
                 "Doanh thu dự báo": forecast_result_raw["yhat"],
                 "Chênh lệch": forecast_result_raw["delta"],
