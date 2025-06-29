@@ -101,21 +101,53 @@ if uploaded_file:
 
             # Hiển thị gợi ý chi tiết
             st.subheader("🔍 Phân tích & Gợi ý")
+
             suggestions = []
             for _, row in forecast_result.iterrows():
                 month_label = row["Tháng dự báo"]
                 yhat = row["Doanh thu dự báo"]
-                delta = row["Chênh lệch"]
                 pct = row["So với TB 3T (%)"]
 
-                if yhat > recent_avg:
-                    suggestions.append(f"🟢 {month_label}: Xu hướng TĂNG. Xem xét tăng nhập hàng và tối ưu giá bán.")
+                # Phân loại xu hướng chi tiết
+                if pct >= 10:
+                    trend = "📈 Tăng mạnh"
+                    action = "Tăng tồn kho 15–25% và đẩy mạnh quảng cáo."
+                elif 5 <= pct < 10:
+                    trend = "🟢 Tăng nhẹ"
+                    action = "Tăng tồn kho 5–10% và duy trì hoạt động marketing."
+                elif -5 < pct < 5:
+                    trend = "➖ Ổn định"
+                    action = "Duy trì tồn kho và chiến lược hiện tại."
+                elif -10 < pct <= -5:
+                    trend = "🔵 Giảm nhẹ"
+                    action = "Cân nhắc giảm giá 5–10% hoặc triển khai khuyến mãi."
                 else:
-                    suggestions.append(f"🔵 {month_label}: Xu hướng GIẢM. Cần cân nhắc khuyến mãi hoặc giảm hàng tồn.")
+                    trend = "📉 Giảm mạnh"
+                    action = "Giảm giá 10–20% và thanh lý hàng tồn."
 
+                # Cảnh báo doanh thu thấp
+                if yhat < 50:
+                    low_revenue_note = "⚠️ Doanh thu rất thấp, cần xem xét điều chỉnh sản phẩm hoặc thị trường."
+                else:
+                    low_revenue_note = ""
+
+                # Cảnh báo biến động vượt threshold
                 if abs(pct) > threshold:
-                    suggestions.append(f"⚠️ {month_label}: Biến động doanh thu {pct:.1f}%. Rủi ro tồn kho.")
+                    volatility_note = f"⚠️ Biến động {pct:.1f}% vượt ngưỡng cảnh báo."
+                else:
+                    volatility_note = ""
 
-            suggestions.append("💡 Duy trì theo dõi định kỳ. Cập nhật mô hình mỗi tháng để phản ánh biến động mới.")
+                suggestion_text = f"""
+**{month_label}**
+- Xu hướng: {trend}
+- Đề xuất: {action}
+{low_revenue_note}
+{volatility_note}
+"""
+                suggestions.append(suggestion_text)
+
+            # Gợi ý tổng
+            suggestions.append("💡 Duy trì theo dõi định kỳ và cập nhật mô hình hàng tháng để phản ánh biến động mới.")
+
             for s in suggestions:
-                st.write(s)
+                st.markdown(s)
