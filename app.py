@@ -60,15 +60,26 @@ if uploaded_file:
                 "So với TB 3T (%)": forecast_result_raw["pct_change"]
             })
 
-            # Tạo nhận xét tổng quan
+            # Tạo nhận xét tổng quan chi tiết
             forecasted_mean = forecast_result["Doanh thu dự báo"].mean()
+            forecasted_min = forecast_result["Doanh thu dự báo"].min()
+            forecasted_max = forecast_result["Doanh thu dự báo"].max()
             pct_total_change = (forecasted_mean - recent_avg) / recent_avg * 100
+
             if pct_total_change > 10:
-                comment = f"📈 Doanh thu dự kiến TĂNG khoảng {pct_total_change:.1f}% so với trung bình 3 tháng gần nhất."
+                trend_desc = "xu hướng TĂNG rõ rệt"
             elif pct_total_change < -10:
-                comment = f"📉 Doanh thu dự kiến GIẢM khoảng {abs(pct_total_change):.1f}% so với trung bình 3 tháng gần nhất."
+                trend_desc = "xu hướng GIẢM đáng kể"
             else:
-                comment = "➖ Doanh thu dự kiến ỔN ĐỊNH, không biến động lớn."
+                trend_desc = "xu hướng ỔN ĐỊNH"
+
+            comment = (
+                f"🔍 Trong {forecast_months} tháng dự báo, "
+                f"doanh thu trung bình dự kiến đạt {forecasted_mean:.1f}, "
+                f"{'tăng' if pct_total_change >=0 else 'giảm'} {abs(pct_total_change):.1f}% so với trung bình 3 tháng gần nhất.\n\n"
+                f"Doanh thu dự báo dao động từ {forecasted_min:.1f} đến {forecasted_max:.1f}, "
+                f"thể hiện {trend_desc}."
+            )
 
             # Hiển thị bảng kết quả
             st.subheader("📊 Kết quả Dự báo")
