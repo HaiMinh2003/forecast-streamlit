@@ -51,10 +51,18 @@ if uploaded_file:
             forecast["delta"] = forecast["yhat"] - recent_avg
             forecast["pct_change"] = 100 * forecast["delta"] / recent_avg
 
-            forecast_result = forecast[["ds", "yhat", "delta", "pct_change"]].tail(forecast_months)
+            # Tạo dataframe kết quả với tên cột rõ ràng
+            forecast_result_raw = forecast[["ds", "yhat", "delta", "pct_change"]].tail(forecast_months)
+            forecast_result = pd.DataFrame({
+                "STT": range(1, len(forecast_result_raw) + 1),
+                "Tháng dự báo": forecast_result_raw["ds"].dt.strftime("%m/%Y"),
+                "Doanh thu dự báo": forecast_result_raw["yhat"],
+                "Chênh lệch": forecast_result_raw["delta"],
+                "So với TB 3T (%)": forecast_result_raw["pct_change"]
+            })
 
             # Tạo nhận xét tổng quan
-            forecasted_mean = forecast_result["yhat"].mean()
+            forecasted_mean = forecast_result["Doanh thu dự báo"].mean()
             pct_total_change = (forecasted_mean - recent_avg) / recent_avg * 100
             if pct_total_change > 10:
                 comment = f"📈 Doanh thu dự kiến TĂNG khoảng {pct_total_change:.1f}% so với trung bình 3 tháng gần nhất."
@@ -69,8 +77,14 @@ if uploaded_file:
                 return "color: red;" if abs(val) > threshold else ""
 
             st.dataframe(
-                forecast_result.style.format({"yhat": "{:.2f}", "delta": "{:.2f}", "pct_change": "{:.1f}%"})
-                .applymap(highlight_delta, subset=["pct_change"])
+                forecast_result.style.format({
+                    "Doanh thu dự báo": "{:.2f}",
+                    "Chênh lệch": "{:.2f}",
+                    "So với TB 3T (%)": "{:.1f}%"
+                }).applymap(
+                    lambda v: "color: red;" if isinstance(v, (float, int)) and abs(v) > threshold else "",
+                    subset=["So với TB 3T (%)"]
+                )
             )
 
             # Hiển thị biểu đồ
@@ -90,11 +104,10 @@ if uploaded_file:
             st.subheader("🔍 Phân tích & Gợi ý")
             suggestions = []
             for _, row in forecast_result.iterrows():
-                date = row["ds"]
-                yhat = row["yhat"]
-                delta = row["delta"]
-                pct = row["pct_change"]
-                month_label = f"Tháng {date.month}/{date.year}"
+                month_label = row["Tháng dự báo"]
+                yhat = row["Doanh thu dự báo"]
+                delta = row["Chênh lệch"]
+                pct = row["So với TB 3T (%)"]
 
                 if yhat > recent_avg:
                     suggestions.append(f"🟢 {month_label}: Xu hướng TĂNG. Xem xét tăng nhập hàng và tối ưu giá bán.")
